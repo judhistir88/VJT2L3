@@ -88,13 +88,17 @@ async def progress_bar(current, total, reply, start):
             sp = str(hrb(speed)) + "/s"
             tot = hrb(total)
             cur = hrb(current)
-            bar_length = 11
+            bar_length = 10  # Length of the progress bar
             completed_length = int(current * bar_length / total)
             remaining_length = bar_length - completed_length
-            progress_bar = "▰" * completed_length + "▱" * remaining_length
-            
+
+            # Create dynamic progress bar
+            progress_bar = '✅' * completed_length
+            if completed_length < bar_length:
+                progress_bar += '🟨'
+            progress_bar += '🟥' * (remaining_length - 1)
+
             try:
-                await reply.edit(f'<b>\n ╭──⌯════🆄︎ᴘʟᴏᴀᴅɪɴɢ⬆️⬆️═════⌯──╮ \n├⚡ {progress_bar}|﹝{perc}﹞ \n├🚀 Speed » {sp} \n├📟 Processed » {cur}\n├🧲 Size - ETA » {tot} - {eta} \n├🤖 𝔹ʏ » @VJ_Botz\n╰─═══ ✪ @VJ_Botz ✪ ═══─╯\n</b>') 
+                await reply.edit(f'<b>\n ⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️ \n├⚡ {progress_bar}|﹝{perc}﹞ \n├🚀 Speed ➡️ {sp} \n├📟 Processed ➡️ {cur}\n├🧲 Size - ETA ➡️ {tot} - {eta} \n├🤖 All Set ✅ \n</b>') 
             except FloodWait as e:
                 time.sleep(e.x)
-
