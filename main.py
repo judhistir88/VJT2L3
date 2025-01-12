@@ -8,6 +8,7 @@ import sys
 import json
 import time
 import asyncio
+import logging
 import requests
 import subprocess
 
@@ -25,6 +26,11 @@ from pyrogram.errors.exceptions.bad_request_400 import StickerEmojiInvalid
 from pyrogram.types.messages_and_media import message
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
+# Configure logging
+logging.basicConfig(filename='bot.log', level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
+# Example of logging
+logging.info("Bot started")
 
 bot = Client(
     "bot",
@@ -32,18 +38,18 @@ bot = Client(
     api_hash=API_HASH,
     bot_token=BOT_TOKEN)
 
+OWNER_ID = 2094369069  # Replace with your Telegram user ID
 
 @bot.on_message(filters.command(["start"]))
 async def start(bot: Client, m: Message):
     await m.reply_text(f"<b>Hello {m.from_user.mention} 👋\n\n I Am A Bot For Download Links From Your **.TXT** File And Then Upload That File On Telegram So Basically If You Want To Use Me First Send Me /upload Command And Then Follow Few Steps..\n\nUse /stop to stop any ongoing task.</b>")
-
+    logging.info(f"Start command received from user: {m.from_user.id}")
 
 @bot.on_message(filters.command("stop"))
 async def restart_handler(_, m):
     await m.reply_text("**Stopped**🚦", True)
+    logging.info(f"Stop command received from user: {m.from_user.id}")
     os.execl(sys.executable, sys.executable, *sys.argv)
-
-
 
 @bot.on_message(filters.command(["upload"]))
 async def upload(bot: Client, m: Message):
@@ -62,12 +68,11 @@ async def upload(bot: Client, m: Message):
        for i in content:
            links.append(i.split("://", 1))
        os.remove(x)
-            # print(len(links)
     except:
            await m.reply_text("**Invalid file input.**")
            os.remove(x)
+           logging.error("Invalid file input.")
            return
-    
    
     await editable.edit(f"**𝕋ᴏᴛᴀʟ ʟɪɴᴋ𝕤 ғᴏᴜɴᴅ ᴀʀᴇ🔗🔗** **{len(links)}**\n\n**𝕊ᴇɴᴅ 𝔽ʀᴏᴍ ᴡʜᴇʀᴇ ʏᴏᴜ ᴡᴀɴᴛ ᴛᴏ ᴅᴏᴡɴʟᴏᴀᴅ ɪɴɪᴛɪᴀʟ ɪ𝕤** **1**")
     input0: Message = await bot.listen(editable.chat.id)
@@ -79,7 +84,6 @@ async def upload(bot: Client, m: Message):
     raw_text0 = input1.text
     await input1.delete(True)
     
-
     await editable.edit("**𝔼ɴᴛᴇʀ ʀᴇ𝕤ᴏʟᴜᴛɪᴏɴ📸**\n144,240,360,480,720,1080 please choose quality")
     input2: Message = await bot.listen(editable.chat.id)
     raw_text2 = input2.text
@@ -102,8 +106,6 @@ async def upload(bot: Client, m: Message):
     except Exception:
             res = "UN"
     
-    
-
     await editable.edit("Now Enter A Caption to add caption on your uploaded file")
     input3: Message = await bot.listen(editable.chat.id)
     raw_text3 = input3.text
@@ -206,11 +208,34 @@ async def upload(bot: Client, m: Message):
                 await m.reply_text(
                     f"**downloading Interupted **\n{str(e)}\n**Name** » {name}\n**Link** » `{url}`"
                 )
+                logging.error(f"Downloading interrupted: {str(e)}")
                 continue
 
     except Exception as e:
         await m.reply_text(e)
+        logging.error(f"Error during upload: {str(e)}")
     await m.reply_text("**𝔻ᴏɴᴇ 𝔹ᴏ𝕤𝕤😎**")
+    logging.info("Upload process completed successfully")
 
+@bot.on_message(filters.command(["log"]) & filters.user(OWNER_ID))
+async def send_logs(bot: Client, m: Message):
+    try:
+        with open('bot.log', 'r') as f:
+            lines = f.readlines()
+            last_1000_lines = lines[-1000:]
+        
+        # Save the last 1000 lines to a temporary file
+        with open('last_1000_logs.txt', 'w') as f:
+            f.writelines(last_1000_lines)
+        
+        # Send the log file to the owner/admin
+        await bot.send_document(chat_id=m.chat.id, document='last_1000_logs.txt', caption="Here are the last 1000 lines of the log file.")
+        
+        # Clean up the temporary file
+        os.remove('last_1000_logs.txt')
+    
+    except Exception as e:
+        await m.reply_text(f"An error occurred: {str(e)}")
+        logging.error(f"Error sending logs: {str(e)}")
 
 bot.run()
